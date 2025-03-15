@@ -46,6 +46,7 @@ class _RuntimeMaterialsState extends State<RuntimeMaterials> {
             Expanded(
               child: ArCoreView(
                 onArCoreViewCreated: _onArCoreViewCreated,
+                enableTapRecognizer: true, // Enable tap recognition
               ),
             ),
           ],
@@ -57,8 +58,42 @@ class _RuntimeMaterialsState extends State<RuntimeMaterials> {
   void _onArCoreViewCreated(ArCoreController controller) {
     arCoreController = controller;
 
-    _addSphere();
+    // Register the tap handler
+    arCoreController?.onPlaneTap = _handleOnPlaneTap;
   }
+
+  void _handleOnPlaneTap(List<ArCoreHitTestResult> hits) {
+    final hit = hits.first;
+
+    // Create the material
+    final material = ArCoreMaterial(
+      color: color,
+      metallic: metallic,
+      roughness: roughness,
+      reflectance: reflectance,
+    );
+
+    // Create the sphere
+    final sphere = ArCoreSphere(
+      materials: [material],
+      radius: 0.1,
+    );
+
+    // Remove previous sphere if it exists
+    if (sphereNode != null) {
+      arCoreController?.removeNode(nodeName: sphereNode!.name);
+    }
+
+    // Add the new sphere at the hit position
+    sphereNode = ArCoreNode(
+      shape: sphere,
+      position: hit.pose.translation,
+      rotation: hit.pose.rotation,
+    );
+
+    arCoreController?.addArCoreNode(sphereNode!);
+  }
+
 
   void _addSphere() {
     final material = ArCoreMaterial(
